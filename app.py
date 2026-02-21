@@ -154,52 +154,6 @@ def _resize_image_base64_for_display(b64_string, max_size=1200, quality=85):
         return b64_string
 
 
-def _draw_label_overlay(b64_string, label, confidence):
-    """วาดข้อความ ชื่ออาหาร + ความมั่นใจ XX% บนภาพ (กรณีไม่มีภาพจาก YOLO) ให้มือถือเห็นเหมือนใน notebook"""
-    if not b64_string or not label:
-        return b64_string
-    try:
-        import base64
-        import io
-        from PIL import Image, ImageDraw, ImageFont
-        raw = base64.b64decode(b64_string)
-        img = Image.open(io.BytesIO(raw)).convert('RGB')
-        w, h = img.size
-        font_size = max(24, min(w, h) // 18)
-        text = '{} {:.0%}'.format(label, float(confidence) if confidence is not None else 0.9)
-        draw = ImageDraw.Draw(img)
-        font = None
-        for path in [
-            'C:/Windows/Fonts/leelawad.ttf',
-            'C:/Windows/Fonts/thsarabunnew.ttf',
-            '/usr/share/fonts/truetype/thai/Garuda.ttf',
-            '/usr/share/fonts/truetype/fonts-thai-tlwg/TlwgMono.ttf',
-        ]:
-            if os.path.isfile(path):
-                try:
-                    font = ImageFont.truetype(path, font_size)
-                    break
-                except Exception:
-                    pass
-        if font is None:
-            try:
-                font = ImageFont.load_default()
-            except Exception:
-                font = None
-        # แถบด้านล่าง + ข้อความ
-        padding = max(8, min(w, h) // 40)
-        box_color = (16, 185, 129)
-        text_color = (255, 255, 255)
-        y0 = h - font_size - padding * 2
-        draw.rectangle([0, y0, w, h], fill=box_color)
-        draw.text((padding, y0 + padding), text, fill=text_color, font=font)
-        buf = io.BytesIO()
-        img.save(buf, format='JPEG', quality=88)
-        return base64.b64encode(buf.getvalue()).decode('utf-8')
-    except Exception:
-        return b64_string
-
-
 @app.route('/api/detect', methods=['POST'])
 def api_detect():
     """ถ่ายภาพ (ถ้ามีกล้อง) หรือรับภาพอัปโหลด แล้วดึงข้อมูลมาวิเคราะห์ด้วย best.pt หรือโหมดจำลอง
@@ -223,7 +177,6 @@ def api_detect():
     # มีภาพ → วิเคราะห์ด้วยโมเดล (หรือ mock ถ้าโมเดลไม่ทำงาน); ไม่มีภาพ → ใช้ mock เสมอ
     detection = None
     total_price = 0.0
-    annotated_from_yolo = False
     if image_path:
         try:
             from food_detector import is_available, detect_best_with_annotated_image
@@ -238,7 +191,6 @@ def api_detect():
                     }
                     if annotated_base64:
                         image_base64 = annotated_base64
-                        annotated_from_yolo = True
         except Exception:
             pass
         if image_path and os.path.exists(image_path):
@@ -246,16 +198,6 @@ def api_detect():
                 os.unlink(image_path)
             except Exception:
                 pass
-        # ถ้าไม่มีภาพที่วาด label จาก YOLO แต่มีภาพกับผล detection → วาดชื่อ+% บนภาพให้มือถือเห็น
-        if image_base64 and not annotated_from_yolo:
-            if detection is None:
-                detection = run_detection_mock()
-                total_price = detection['price_per_unit']
-            image_base64 = _draw_label_overlay(
-                image_base64,
-                detection.get('label', ''),
-                detection.get('confidence', 0.9),
-            )
         if image_base64:
             image_base64 = _resize_image_base64_for_display(image_base64)
 

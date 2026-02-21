@@ -21,7 +21,6 @@ const btnDetect = document.getElementById('btn-detect');
 const resultImage = document.getElementById('result-image');
 const resultImagePlaceholder = document.getElementById('result-image-placeholder');
 const resultFoodName = document.getElementById('result-food-name');
-const resultConfidence = document.getElementById('result-confidence');
 const resultWeight = document.getElementById('result-weight');
 const resultPrice = document.getElementById('result-price');
 const resultNoImageMsg = document.getElementById('result-no-image-msg');
@@ -139,8 +138,6 @@ function showResultPage(data) {
   }
 
   resultFoodName.textContent = detection.label || 'ผลจำลอง';
-  const conf = detection.confidence != null ? Number(detection.confidence) : 0.9;
-  if (resultConfidence) resultConfidence.textContent = (conf * 100).toFixed(0) + '%';
   resultWeight.textContent = Number(weight).toFixed(1) + ' กรัม';
   resultPrice.textContent = Number(price).toFixed(0) + ' บาท';
 
