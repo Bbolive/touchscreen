@@ -32,14 +32,24 @@ const btnConfirm = document.getElementById('btn-confirm');
 const countdownNum = document.getElementById('countdown-num');
 const btnDoneNow = document.getElementById('btn-done-now');
 const inputUpload = document.getElementById('input-upload');
+const inputCamera = document.getElementById('input-camera');
 const btnUpload = document.getElementById('btn-upload');
+const btnCamera = document.getElementById('btn-camera');
 const uploadFilename = document.getElementById('upload-filename');
 
 let weightInterval = null;
 let countdownTimer = null;
 
 function hasUploadedFile() {
-  return inputUpload && inputUpload.files && inputUpload.files.length > 0;
+  const fromUpload = inputUpload && inputUpload.files && inputUpload.files.length > 0;
+  const fromCamera = inputCamera && inputCamera.files && inputCamera.files.length > 0;
+  return fromUpload || fromCamera;
+}
+
+function getSelectedFile() {
+  if (inputUpload && inputUpload.files && inputUpload.files.length > 0) return inputUpload.files[0];
+  if (inputCamera && inputCamera.files && inputCamera.files.length > 0) return inputCamera.files[0];
+  return null;
 }
 
 function updateDetectButtonState() {
@@ -138,12 +148,11 @@ function showResultPage(data) {
 }
 
 function clearUpload() {
-  if (inputUpload) {
-    inputUpload.value = '';
-    if (uploadFilename) {
-      uploadFilename.textContent = '';
-      uploadFilename.classList.remove('has-file');
-    }
+  if (inputUpload) inputUpload.value = '';
+  if (inputCamera) inputCamera.value = '';
+  if (uploadFilename) {
+    uploadFilename.textContent = '';
+    uploadFilename.classList.remove('has-file');
   }
   updateDetectButtonState();
 }
@@ -176,15 +185,15 @@ function goDone() {
 async function runDetection() {
   if (btnDetect.disabled) return;
 
-  const useUpload = hasUploadedFile();
+  const file = getSelectedFile();
   btnDetect.disabled = true;
   btnDetect.innerHTML = '<span class="btn-icon">⏳</span> กำลังตรวจจับ...';
 
   try {
     let res;
-    if (useUpload && inputUpload.files[0]) {
+    if (file) {
       const form = new FormData();
-      form.append('image', inputUpload.files[0]);
+      form.append('image', file);
       res = await fetch(API.detect, { method: 'POST', body: form });
     } else {
       res = await fetch(API.detect, { method: 'POST' });
@@ -212,21 +221,34 @@ async function runDetection() {
   updateDetectButtonState();
 }
 
-// Event listeners
+function onImageSelected(file) {
+  if (!uploadFilename) return;
+  if (file) {
+    uploadFilename.textContent = file.name;
+    uploadFilename.classList.add('has-file');
+    runDetection();
+  } else {
+    uploadFilename.textContent = '';
+    uploadFilename.classList.remove('has-file');
+  }
+  updateDetectButtonState();
+}
+
 if (btnUpload && inputUpload) {
   btnUpload.addEventListener('click', () => inputUpload.click());
   inputUpload.addEventListener('change', () => {
-    if (uploadFilename) {
-      if (inputUpload.files.length > 0) {
-        uploadFilename.textContent = inputUpload.files[0].name;
-        uploadFilename.classList.add('has-file');
-        runDetection();
-      } else {
-        uploadFilename.textContent = '';
-        uploadFilename.classList.remove('has-file');
-      }
-    }
-    updateDetectButtonState();
+    const file = inputUpload.files && inputUpload.files.length > 0 ? inputUpload.files[0] : null;
+    if (inputCamera) inputCamera.value = '';
+    onImageSelected(file);
+  });
+}
+
+if (btnCamera && inputCamera) {
+  btnCamera.addEventListener('click', () => inputCamera.click());
+  inputCamera.addEventListener('change', () => {
+    const file = inputCamera.files && inputCamera.files.length > 0 ? inputCamera.files[0] : null;
+    if (inputUpload) inputUpload.value = '';
+    onImageSelected(file);
   });
 }
 
@@ -235,7 +257,8 @@ btnDetect.addEventListener('click', () => {
   if (hasUploadedFile()) {
     runDetection();
   } else {
-    inputUpload.click();
+    if (inputCamera) inputCamera.click();
+    else if (inputUpload) inputUpload.click();
   }
 });
 

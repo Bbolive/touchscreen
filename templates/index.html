@@ -44,16 +44,20 @@
 
         <div class="upload-section">
           <input type="file" id="input-upload" accept="image/*" class="input-upload-hidden" />
+          <input type="file" id="input-camera" accept="image/*" capture="environment" class="input-upload-hidden" />
           <button type="button" id="btn-upload" class="btn btn-outline btn-upload">
             <span class="btn-icon">📁</span>
             อัปโหลดรูปทดสอบ
+          </button>
+          <button type="button" id="btn-camera" class="btn btn-outline btn-upload">
+            <span class="btn-icon">📷</span>
+            ถ่ายภาพ
           </button>
           <span id="upload-filename" class="upload-filename"></span>
         </div>
 
         <button type="button" id="btn-detect" class="btn btn-primary btn-cta" disabled>
-          <span class="btn-icon">📷</span>
-          ถ่ายภาพ หรือ ตรวจจับอาหาร
+          ตรวจจับอาหาร
         </button>
       </div>
     </section>
