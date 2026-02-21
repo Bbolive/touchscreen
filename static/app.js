@@ -22,6 +22,7 @@ const cameraDot = document.getElementById('camera-dot');
 const liveWeightEl = document.getElementById('live-weight');
 const btnDetect = document.getElementById('btn-detect');
 const resultImage = document.getElementById('result-image');
+const resultLabelsCanvas = document.getElementById('result-labels-canvas');
 const resultImagePlaceholder = document.getElementById('result-image-placeholder');
 const resultFoodName = document.getElementById('result-food-name');
 const resultWeight = document.getElementById('result-weight');
@@ -100,6 +101,59 @@ function getFallbackDetection() {
   return { label: name, confidence: 0.9, price_per_unit: prices[name] || 45 };
 }
 
+/** วาด label บน canvas ตาม detections (พิกัด box เทียบภาพ) — ใช้บนมือถือเมื่อเซิร์ฟเวอร์วาดไม่ได้ */
+function drawLabelsOnCanvas(detections, img, canvas) {
+  if (!canvas || !img || !detections || !Array.isArray(detections) || detections.length === 0) {
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    return;
+  }
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  if (!nw || !nh) return;
+  const rect = img.getBoundingClientRect();
+  const dw = Math.round(rect.width);
+  const dh = Math.round(rect.height);
+  if (dw <= 0 || dh <= 0) return;
+  canvas.width = dw;
+  canvas.height = dh;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, dw, dh);
+  // รองรับ object-fit: cover — ภาพ scale ให้ cover พื้นที่ แล้ว center
+  const scale = Math.max(dw / nw, dh / nh);
+  const offsetX = (dw - nw * scale) / 2;
+  const offsetY = (dh - nh * scale) / 2;
+  const fontPx = Math.max(12, Math.min(18, dw / 18));
+  ctx.font = `600 ${fontPx}px "Sarabun", sans-serif`;
+  ctx.textBaseline = 'top';
+  for (const d of detections) {
+    const box = d.box;
+    if (!box || box.length < 4) continue;
+    const x1 = box[0] * scale + offsetX;
+    const y1 = box[1] * scale + offsetY;
+    const x2 = box[2] * scale + offsetX;
+    const y2 = box[3] * scale + offsetY;
+    const w = x2 - x1;
+    const h = y2 - y1;
+    const label = (d.label_th || d.label || '').trim() || '?';
+    ctx.strokeStyle = 'rgba(0,180,80,0.9)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x1, y1, w, h);
+    ctx.fillStyle = 'rgba(0,180,80,0.85)';
+    const pad = 2;
+    const tw = ctx.measureText(label).width;
+    const th = fontPx + 4;
+    ctx.fillRect(x1, y1 - th - pad, tw + 6, th + pad);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(label, x1 + 3, y1 - th - pad + 2);
+  }
+}
+
 function showResultPage(data) {
   let detection = data.detection;
   const noImage = data.no_image === true;
@@ -120,14 +174,25 @@ function showResultPage(data) {
     }
   }
 
+  const detections = data.detections && Array.isArray(data.detections) ? data.detections : [];
+
   if (imageBase64) {
     resultImage.src = 'data:image/jpeg;base64,' + imageBase64;
     resultImage.classList.add('visible');
     resultImagePlaceholder.classList.add('hidden');
+    function drawWhenReady() {
+      drawLabelsOnCanvas(detections, resultImage, resultLabelsCanvas);
+    }
+    if (resultImage.complete) {
+      drawWhenReady();
+    } else {
+      resultImage.onload = drawWhenReady;
+    }
   } else {
     resultImage.removeAttribute('src');
     resultImage.classList.remove('visible');
     resultImagePlaceholder.classList.remove('hidden');
+    drawLabelsOnCanvas([], resultImage, resultLabelsCanvas);
   }
 
   resultFoodName.textContent = detection.label || 'ผลจำลอง';
