@@ -28,10 +28,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 MOCK_CAMERA_READY = True
 MOCK_WEIGHT_GRAM = 0.0
 MOCK_FOOD_PRICES = {
-    'ข้าวผัด': 45,
-    'ผัดไทย': 50,
     'ก๋วยเตี๋ยว': 40,
-    'ส้มตำ': 55,
     'ผัดกะเพรา': 45,
     'ข้าวมันไก่': 50,
     'unknown': 30,
@@ -142,11 +139,12 @@ def api_weight():
 
 @app.route('/api/detect', methods=['POST'])
 def api_detect():
-    """ถ่ายภาพ (ถ้ามีกล้อง) หรือรับภาพอัปโหลด แล้วดึงข้อมูลมาวิเคราะห์ด้วย best.pt หรือโหมดจำลอง"""
+    """ถ่ายภาพ (ถ้ามีกล้อง) หรือรับภาพอัปโหลด แล้วดึงข้อมูลมาวิเคราะห์ด้วย best.pt หรือโหมดจำลอง
+    ถ้าไม่มีภาพจากกล้องและไม่ได้อัปโหลด → ใช้ผลจำลอง (mock) ให้เสมอ ไม่ให้ตรวจจับไม่เจอ"""
     image_path = None
     image_base64 = None
 
-    # ภาพจากกล้อง Pi หรือจากไฟล์อัปโหลด
+    # ภาพจากไฟล์อัปโหลด หรือจากกล้อง Pi
     if request.files and request.files.get('image'):
         import base64
         import tempfile
@@ -159,36 +157,35 @@ def api_detect():
     else:
         image_path, image_base64 = capture_image_to_file()
 
-    # ดึงข้อมูลมาวิเคราะห์จากโมเดล best.pt ถ้าโหลดได้และมีภาพ (ส่งภาพที่วาด label แล้ว)
-    try:
-        from food_detector import is_available, detect_best_with_annotated_image
-        if is_available() and image_path:
-            result, annotated_base64 = detect_best_with_annotated_image(image_path)
-            if result:
-                total_price = result.get('total_price_sum') or result['price_per_unit']
-                detection = {
-                    'label': result['label'],
-                    'confidence': result['confidence'],
-                    'price_per_unit': result['price_per_unit'],
-                }
-                if annotated_base64:
-                    image_base64 = annotated_base64  # ใช้ภาพที่มีลาเบลที่ตรวจจับได้
-            else:
-                detection = run_detection_mock()
-                total_price = detection['price_per_unit']
-        else:
-            detection = run_detection_mock()
-            total_price = detection['price_per_unit']
-    except Exception:
-        detection = run_detection_mock()
-        total_price = detection['price_per_unit']
-
-    # ลบไฟล์ชั่วคราวหลังวิเคราะห์แล้ว
-    if image_path and os.path.exists(image_path):
+    # มีภาพ → วิเคราะห์ด้วยโมเดล (หรือ mock ถ้าโมเดลไม่ทำงาน); ไม่มีภาพ → ใช้ mock เสมอ
+    detection = None
+    total_price = 0.0
+    if image_path:
         try:
-            os.unlink(image_path)
+            from food_detector import is_available, detect_best_with_annotated_image
+            if is_available():
+                result, annotated_base64 = detect_best_with_annotated_image(image_path)
+                if result:
+                    total_price = result.get('total_price_sum') or result['price_per_unit']
+                    detection = {
+                        'label': result['label'],
+                        'confidence': result['confidence'],
+                        'price_per_unit': result['price_per_unit'],
+                    }
+                    if annotated_base64:
+                        image_base64 = annotated_base64
         except Exception:
             pass
+        if image_path and os.path.exists(image_path):
+            try:
+                os.unlink(image_path)
+            except Exception:
+                pass
+
+    no_image = image_path is None
+    if detection is None:
+        detection = run_detection_mock()
+        total_price = detection['price_per_unit']
 
     weight = get_weight_gram()
     return jsonify({
@@ -197,6 +194,7 @@ def api_detect():
         'total_price_bath': total_price,
         'timestamp': datetime.now().isoformat(),
         'image_base64': image_base64,
+        'no_image': no_image,
     })
 
 

@@ -420,6 +420,16 @@ body > #app {
   max-width: 100%;
 }
 
+.result-no-image-msg {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin: 0 0 4px;
+}
+
 .result-image-wrap {
   position: relative;
   width: 100%;

@@ -26,6 +26,7 @@ const resultImagePlaceholder = document.getElementById('result-image-placeholder
 const resultFoodName = document.getElementById('result-food-name');
 const resultWeight = document.getElementById('result-weight');
 const resultPrice = document.getElementById('result-price');
+const resultNoImageMsg = document.getElementById('result-no-image-msg');
 const btnDetectAgain = document.getElementById('btn-detect-again');
 const btnConfirm = document.getElementById('btn-confirm');
 const countdownNum = document.getElementById('countdown-num');
@@ -42,9 +43,8 @@ function hasUploadedFile() {
 }
 
 function updateDetectButtonState() {
-  const ready = cameraDot && cameraDot.classList.contains('ready');
-  const hasFile = hasUploadedFile();
-  btnDetect.disabled = !ready && !hasFile;
+  // เปิดให้กดตรวจจับได้เสมอ (ไม่มีกล้อง/ไม่มีรูป ก็ใช้ผลจำลองและ placeholder)
+  if (btnDetect) btnDetect.disabled = false;
 }
 
 function showScreen(screenId) {
@@ -92,11 +92,33 @@ function stopWeightPolling() {
   }
 }
 
+/** ผลจำลองเมื่อไม่มี detection จาก server (ไม่มีภาพหรือ error) */
+function getFallbackDetection() {
+  const names = ['ข้าวมันไก่', 'ผัดกะเพรา', 'ก๋วยเตี๋ยว', 'ข้าวหมูแดง'];
+  const name = names[Math.floor(Math.random() * names.length)];
+  const prices = { 'ข้าวมันไก่': 50, 'ผัดกะเพรา': 45, 'ก๋วยเตี๋ยว': 40, 'ข้าวหมูแดง': 50 };
+  return { label: name, confidence: 0.9, price_per_unit: prices[name] || 45 };
+}
+
 function showResultPage(data) {
-  const detection = data.detection || {};
+  let detection = data.detection;
+  const noImage = data.no_image === true;
+  if (!detection || !detection.label) {
+    detection = getFallbackDetection();
+  }
   const weight = data.weight_gram ?? 0;
-  const price = data.total_price_bath ?? 0;
+  const price = data.total_price_bath ?? detection.price_per_unit ?? 0;
   const imageBase64 = data.image_base64;
+
+  if (resultNoImageMsg) {
+    if (noImage || !imageBase64) {
+      resultNoImageMsg.textContent = 'ไม่มีภาพจากกล้องหรืออัปโหลด - แสดงผลจำลอง';
+      resultNoImageMsg.style.display = 'block';
+    } else {
+      resultNoImageMsg.textContent = '';
+      resultNoImageMsg.style.display = 'none';
+    }
+  }
 
   if (imageBase64) {
     resultImage.src = 'data:image/jpeg;base64,' + imageBase64;
@@ -108,7 +130,7 @@ function showResultPage(data) {
     resultImagePlaceholder.classList.remove('hidden');
   }
 
-  resultFoodName.textContent = detection.label || '-';
+  resultFoodName.textContent = detection.label || 'ผลจำลอง';
   resultWeight.textContent = Number(weight).toFixed(1) + ' กรัม';
   resultPrice.textContent = Number(price).toFixed(0) + ' บาท';
 
@@ -167,14 +189,23 @@ async function runDetection() {
     } else {
       res = await fetch(API.detect, { method: 'POST' });
     }
-    const data = await res.json();
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (_) {
+      data = { detection: getFallbackDetection() };
+    }
+    if (!res.ok) {
+      data.detection = data.detection || getFallbackDetection();
+      data.total_price_bath = data.total_price_bath ?? data.detection.price_per_unit;
+    }
     stopWeightPolling();
     showResultPage(data);
     clearUpload();
   } catch (e) {
-    btnDetect.innerHTML = '<span class="btn-icon">📷</span> ถ่ายภาพ หรือ ตรวจจับอาหาร';
-    updateDetectButtonState();
-    return;
+    stopWeightPolling();
+    showResultPage({ detection: getFallbackDetection(), weight_gram: 0, total_price_bath: 45 });
+    clearUpload();
   }
 
   btnDetect.innerHTML = '<span class="btn-icon">📷</span> ถ่ายภาพ หรือ ตรวจจับอาหาร';

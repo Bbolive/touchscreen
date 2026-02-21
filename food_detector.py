@@ -144,16 +144,15 @@ def detect_best(image_path=None, image_array=None, conf_threshold=None):
 
 def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
     """
-    วาดกล่องและลาเบล (ชื่ออาหารภาษาไทย) บนภาพ แล้วคืน base64
+    วาดกล่องและลาเบล (ชื่อวัตถุดิบภาษาไทย เช่น ไก่ ข้าว แตงกวา) บนภาพ แล้วคืน base64
     boxes: tensor หรือ list ของ [x1,y1,x2,y2]
     names: dict cls_id -> label_en
-    names_th: dict label_en -> label_th
+    names_th: dict label_en -> label_th (เช่น rice->ข้าว, cucumber->แตงกวา, fried_chicken->ไก่ทอด)
     """
     import base64
     import io
     try:
         from PIL import Image, ImageDraw, ImageFont
-        import numpy as np
     except ImportError:
         return None
 
@@ -164,19 +163,22 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
 
     draw = ImageDraw.Draw(img)
     w, h = img.size
+    font_size = max(14, min(w, h) // 25)
 
-    # ลองโหลดฟอนต์ภาษาไทย (Windows/Linux)
+    # ลองโหลดฟอนต์ภาษาไทย (Windows/Linux/macOS)
     font = None
     for path in [
         'C:/Windows/Fonts/leelawad.ttf',
         'C:/Windows/Fonts/thsarabunnew.ttf',
         'C:/Windows/Fonts/THSarabun.ttf',
+        'C:/Windows/Fonts/tahoma.ttf',
         '/usr/share/fonts/truetype/thai/Garuda.ttf',
         '/usr/share/fonts/truetype/fonts-thai-tlwg/TlwgMono.ttf',
+        '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
     ]:
         if os.path.isfile(path):
             try:
-                font = ImageFont.truetype(path, max(14, min(w, h) // 25))
+                font = ImageFont.truetype(path, font_size)
                 break
             except Exception:
                 pass
@@ -186,10 +188,10 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
         except Exception:
             font = None
 
-    # สีกล่องและข้อความ (เขียว)
     box_color = (16, 185, 129)
     text_bg = (16, 185, 129)
     text_color = (255, 255, 255)
+    label_h = max(18, min(w, h) // 20)
 
     for i in range(len(boxes)):
         try:
@@ -205,19 +207,19 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
             label_en = names.get(cls_id, 'unknown')
             if isinstance(label_en, int):
                 label_en = names.get(label_en, 'unknown')
+            # ใช้ชื่อภาษาไทย (วัตถุดิบ): ข้าว แตงกวา ไก่ทอด ฯลฯ
             label_th = names_th.get(label_en, label_en)
             text = '{} {:.0%}'.format(label_th, conf)
         except Exception:
             continue
 
-        # กล่อง
         draw.rectangle([x1, y1, x2, y2], outline=box_color, width=max(2, min(w, h) // 200))
-        # พื้นหลังข้อความ (แถบด้านบนกล่อง)
-        label_h = max(18, min(w, h) // 20)
         ty0 = max(0, y1 - label_h)
+        draw.rectangle([x1, ty0, x2, y1], fill=text_bg)
         if font:
-            draw.rectangle([x1, ty0, x2, y1], fill=text_bg)
             draw.text((x1, ty0), text, fill=text_color, font=font)
+        else:
+            draw.text((x1, ty0), text, fill=text_color)
 
     buf = io.BytesIO()
     img.save(buf, format='JPEG', quality=88)
@@ -249,9 +251,24 @@ def detect_best_with_annotated_image(image_path, conf_threshold=None):
     if boxes is None or len(boxes) == 0:
         return None, None
 
-    items = detect(image_path=image_path, conf_threshold=conf)
     best_result = detect_best(image_path=image_path, conf_threshold=conf)
-
     confidences = [float(boxes.conf[i].item()) for i in range(len(boxes))]
     annotated_b64 = _draw_labels_on_image(image_path, boxes, names, CLASS_NAMES_TH, confidences)
+
+    # ถ้าวาดลาเบลภาษาไทยไม่ได้ ใช้ภาพที่ ultralytics วาด (ภาษาอังกฤษ)
+    if not annotated_b64:
+        try:
+            import base64
+            import io
+            plotted = results[0].plot()
+            if len(plotted.shape) == 3 and plotted.shape[2] == 3:
+                plotted = plotted[:, :, ::-1]
+            from PIL import Image
+            img = Image.fromarray(plotted)
+            buf = io.BytesIO()
+            img.save(buf, format='JPEG', quality=88)
+            annotated_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+        except Exception:
+            pass
+
     return best_result, annotated_b64
