@@ -1,0 +1,536 @@
+/* ระบบตรวจจับอาหาร - 3 หน้า, UX/UI สำหรับจอทัชสกรีน 7 นิ้ว */
+:root {
+  --bg: #0c1222;
+  --bg-soft: #111827;
+  --surface: #1a2332;
+  --surface-hover: #243044;
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-glow: rgba(16, 185, 129, 0.35);
+  --accent: #34d399;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --touch-min: 52px;
+  --font: 'Sarabun', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  font-size: 18px;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: column;
+}
+
+body > .app-tabbar {
+  flex-shrink: 0;
+}
+
+body > #app {
+  flex: 1;
+  overflow: auto;
+}
+
+.app-tabbar {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 12px 20px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tabbar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tabbar-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+  font-weight: 500;
+}
+
+#app {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ---- หน้าจอ共通 ---- */
+.screen {
+  display: none;
+  width: 100%;
+  min-height: calc(100vh - 120px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.35s ease;
+}
+
+.screen.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- หน้าแรก ---- */
+.page-home {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.hero h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.camera-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  width: 100%;
+  justify-content: center;
+}
+
+.camera-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.camera-dot.ready {
+  background: var(--success);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.camera-dot.error {
+  background: var(--danger);
+}
+
+.camera-msg {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.guide-card {
+  width: 100%;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.guide-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.guide-list {
+  list-style: none;
+  padding: 0;
+}
+
+.guide-list li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.guide-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.guide-list strong {
+  color: var(--accent);
+}
+
+.weight-ticker {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.weight-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+
+.btn {
+  min-height: var(--touch-min);
+  padding: 14px 24px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font);
+  -webkit-user-select: none;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-cta {
+  width: 100%;
+  min-height: 58px;
+  font-size: 1.15rem;
+  background: linear-gradient(135deg, var(--primary) 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.btn-cta:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-hover) 0%, #047857 100%);
+  box-shadow: 0 6px 24px var(--primary-glow);
+}
+
+.btn-icon {
+  font-size: 1.25rem;
+}
+
+.upload-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+.input-upload-hidden {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.btn-upload {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+}
+
+.upload-filename {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-filename.has-file {
+  color: var(--accent);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 2px solid var(--border);
+}
+
+.btn-outline:hover {
+  background: var(--surface);
+  border-color: var(--text-muted);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+/* ---- หน้าที่สอง: ผลการตรวจจับ ---- */
+.page-result {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.result-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.result-image-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.result-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.result-image.visible {
+  display: block;
+}
+
+.result-image-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.result-image-placeholder.hidden {
+  display: none;
+}
+
+.placeholder-icon {
+  font-size: 2.5rem;
+  opacity: 0.7;
+}
+
+.result-info {
+  width: 100%;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-row:last-child {
+  border-bottom: none;
+}
+
+.result-name .result-value {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.result-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.result-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.result-price-row .result-value {
+  font-size: 1.35rem;
+}
+
+.result-price-num {
+  color: var(--primary);
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.result-actions .btn {
+  min-width: 140px;
+}
+
+/* ---- หน้าที่สาม: เสร็จสิ้น ---- */
+.page-done {
+  text-align: center;
+  padding: 24px;
+}
+
+.done-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px var(--primary-glow);
+  animation: scaleIn 0.4s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.page-done h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.done-message {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.countdown-wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.countdown-label {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.countdown-num {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 2ch;
+}
+
+.countdown-unit {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+#btn-done-now {
+  min-height: 44px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+}
+
+/* ---- Responsive / จอเล็ก ---- */
+@media (max-height: 520px) {
+  .app-tabbar { padding: 8px 12px 6px; }
+  .tabbar-title { font-size: 0.85rem; }
+  .tabbar-subtitle { font-size: 0.65rem; }
+  .hero h1 { font-size: 1.35rem; }
+  .guide-card { padding: 14px 16px; }
+  .btn-cta { min-height: 50px; font-size: 1rem; }
+  .result-image-wrap { max-width: 220px; }
+  .done-icon { width: 56px; height: 56px; font-size: 1.75rem; }
+}
+
+@media (min-width: 768px) {
+  #app { padding: 28px; }
+  .hero h1 { font-size: 1.85rem; }
+  .result-title { font-size: 1.5rem; }
+  .result-image-wrap { max-width: 320px; }
+}

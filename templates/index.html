@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ระบบตรวจจับอาหารอัตโนมัติด้วยปัญญาประดิษฐ์ (Automatic Food Detection System using AI)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="app-tabbar">
+    <h1 class="tabbar-title">ระบบตรวจจับอาหารอัตโนมัติด้วยปัญญาประดิษฐ์</h1>
+    <p class="tabbar-subtitle">Automatic Food Detection System using AI</p>
+  </header>
+  <div id="app">
+    <!-- หน้าแรก: สถานะกล้อง + คำแนะนำ + ปุ่มถ่ายภาพ/ตรวจจับ -->
+    <section id="screen-home" class="screen active">
+      <div class="page-home">
+        <header class="hero">
+          <h1>ระบบตรวจจับอาหาร</h1>
+          <p class="tagline">วางจาน แล้วกดถ่ายภาพเพื่อตรวจจับและคำนวณราคา</p>
+        </header>
+
+        <div class="camera-status-badge" id="camera-badge">
+          <span class="camera-dot" id="camera-dot"></span>
+          <span class="camera-msg" id="camera-status-text">กำลังตรวจสอบกล้อง...</span>
+        </div>
+
+        <div class="guide-card">
+          <h3>คำแนะนำการใช้งาน</h3>
+          <ul class="guide-list">
+            <li>วางจานอาหารบนแท่นชั่งให้มั่นคง</li>
+            <li>จัดให้กล้องมองเห็นจานชัดเจน</li>
+            <li>กดปุ่ม <strong>ถ่ายภาพ / ตรวจจับอาหาร</strong> ด้านล่าง</li>
+            <li>รอระบบวิเคราะห์และแสดงผล</li>
+          </ul>
+        </div>
+
+        <div class="upload-section">
+          <input type="file" id="input-upload" accept="image/*" class="input-upload-hidden" />
+          <button type="button" id="btn-upload" class="btn btn-outline btn-upload">
+            <span class="btn-icon">📁</span>
+            อัปโหลดรูปทดสอบ
+          </button>
+          <span id="upload-filename" class="upload-filename"></span>
+        </div>
+
+        <button type="button" id="btn-detect" class="btn btn-primary btn-cta" disabled>
+          <span class="btn-icon">📷</span>
+          ถ่ายภาพ หรือ ตรวจจับอาหาร
+        </button>
+      </div>
+    </section>
+
+    <!-- หน้าที่สอง: ภาพที่ตรวจจับ + น้ำหนัก ราคา ชื่ออาหาร + ปุ่มเริ่มใหม่ / ยืนยัน -->
+    <section id="screen-result" class="screen">
+      <div class="page-result">
+        <h2 class="result-title">ผลการตรวจจับ</h2>
+
+        <div class="result-image-wrap">
+          <img id="result-image" class="result-image" src="" alt="ภาพที่ตรวจจับ" />
+          <div id="result-image-placeholder" class="result-image-placeholder">
+            <span class="placeholder-icon">🍽️</span>
+            <span>ภาพที่ตรวจจับ</span>
+          </div>
+        </div>
+
+        <div class="result-info">
+          <div class="result-row result-name">
+            <span class="result-label">ชื่ออาหาร</span>
+            <span id="result-food-name" class="result-value">-</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">น้ำหนัก</span>
+            <span id="result-weight" class="result-value">0.0 กรัม</span>
+          </div>
+          <div class="result-row result-price-row">
+            <span class="result-label">ราคา</span>
+            <span id="result-price" class="result-value result-price-num">0 บาท</span>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button type="button" id="btn-detect-again" class="btn btn-outline">เริ่มตรวจจับใหม่</button>
+          <button type="button" id="btn-confirm" class="btn btn-primary">ยืนยัน</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- หน้าที่สาม: เสร็จสิ้น + นับถอยหลัง 5 วินาที -->
+    <section id="screen-done" class="screen">
+      <div class="page-done">
+        <div class="done-icon">✓</div>
+        <h2>เสร็จสิ้นการใช้งาน</h2>
+        <p class="done-message">ขอบคุณที่ใช้บริการ</p>
+        <div class="countdown-wrap">
+          <span class="countdown-label">กลับไปหน้าแรกใน</span>
+          <span id="countdown-num" class="countdown-num">5</span>
+          <span class="countdown-unit">วินาที</span>
+        </div>
+        <button type="button" id="btn-done-now" class="btn btn-ghost">กลับเลย</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# สำหรับดึงข้อมูลมาวิเคราะห์ด้วยโมเดล best.pt (YOLOv8) และวาด label บนภาพ
+# ติดตั้ง: pip install -r requirements-ml.txt
+flask>=3.0.0
+ultralytics>=8.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+Pillow>=9.0.0
