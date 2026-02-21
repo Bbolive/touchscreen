@@ -228,27 +228,28 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
 
 def detect_best_with_annotated_image(image_path, conf_threshold=None):
     """
-    วิเคราะห์ภาพ แล้วคืน (result, ภาพที่วาด label แล้วเป็น base64, รายการ detections พร้อม box สำหรับวาดบนมือถือ)
+    วิเคราะห์ภาพ แล้วคืน (result สำหรับแสดงชื่อ/ราคา, ภาพที่วาด label แล้วเป็น base64)
+    result รูปแบบเดียวกับ detect_best; ภาพมีกล่องและลาเบลชื่ออาหาร (ไทย) ที่ตำแหน่งที่ตรวจจับได้
     """
     from config import CONFIDENCE_THRESHOLD, CLASS_NAMES_TH
 
     model = load_model()
     if model is None or not image_path or not os.path.isfile(image_path):
-        return None, None, []
+        return None, None
 
     conf = conf_threshold if conf_threshold is not None else CONFIDENCE_THRESHOLD
     try:
         results = model.predict(source=image_path, conf=conf, verbose=False)
     except Exception:
-        return None, None, []
+        return None, None
 
     if not results or len(results) == 0:
-        return None, None, []
+        return None, None
 
     boxes = results[0].boxes
     names = results[0].names or {}
     if boxes is None or len(boxes) == 0:
-        return None, None, []
+        return None, None
 
     best_result = detect_best(image_path=image_path, conf_threshold=conf)
     confidences = [float(boxes.conf[i].item()) for i in range(len(boxes))]
@@ -270,26 +271,4 @@ def detect_best_with_annotated_image(image_path, conf_threshold=None):
         except Exception:
             pass
 
-    # รายการที่ตรวจจับได้พร้อมพิกัดกล่อง (ให้ frontend วาด label ได้บนมือถือ)
-    detections_list = []
-    for i in range(len(boxes)):
-        try:
-            xy = boxes.xyxy[i]
-            if hasattr(xy, 'cpu'):
-                xy = xy.cpu().numpy()
-            x1, y1, x2, y2 = float(xy[0]), float(xy[1]), float(xy[2]), float(xy[3])
-            cls_id = int(boxes.cls[i].item()) if hasattr(boxes.cls[i], 'item') else int(boxes.cls[i])
-            conf = float(boxes.conf[i].item()) if hasattr(boxes.conf[i], 'item') else float(boxes.conf[i])
-            label_en = names.get(cls_id, 'unknown')
-            if isinstance(label_en, int):
-                label_en = names.get(label_en, 'unknown')
-            label_th = CLASS_NAMES_TH.get(label_en, label_en)
-            detections_list.append({
-                'label_th': label_th,
-                'confidence': round(conf, 2),
-                'box': [round(x1), round(y1), round(x2), round(y2)],
-            })
-        except Exception:
-            continue
-
-    return best_result, annotated_b64, detections_list
+    return best_result, annotated_b64

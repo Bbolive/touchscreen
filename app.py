@@ -28,14 +28,9 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 MOCK_CAMERA_READY = True
 MOCK_WEIGHT_GRAM = 0.0
 MOCK_FOOD_PRICES = {
-    'ข้าวหมูกรอบ': 35,
-    'ข้าวหมูแดง': 35,
-    'ข้าวหมูแดงและข้าวหมูกรอบ': 35,
-    'ข้าวกะเพราหมูสับเต้าหู้ทอด': 45,
-    'ข้าวมันไก่ทอด': 35,
-    'ข้าวมันไก่ต้ม': 35,
-    'ก๋วยเตี๋ยวไก่น่อง': 40,
-    'ก๋วยเตี๋ยวไก่ฉีก': 40,
+    'ก๋วยเตี๋ยว': 40,
+    'ผัดกะเพรา': 45,
+    'ข้าวมันไก่': 50,
     'unknown': 30,
 }
 
@@ -142,6 +137,29 @@ def api_weight():
     return jsonify({'weight_gram': round(w, 1), 'unit': 'g'})
 
 
+def _resize_image_base64_for_display(b64_string, max_size=1200, quality=85):
+    """ย่อภาพให้เหมาะกับการแสดงบนมือถือ (ลดขนาด data URL เพื่อให้ label แสดงได้)"""
+    if not b64_string:
+        return b64_string
+    try:
+        import base64
+        from PIL import Image
+        import io
+        raw = base64.b64decode(b64_string)
+        img = Image.open(io.BytesIO(raw)).convert('RGB')
+        w, h = img.size
+        if max(w, h) > max_size:
+            ratio = max_size / max(w, h)
+            new_w = int(w * ratio)
+            new_h = int(h * ratio)
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=quality)
+        return base64.b64encode(buf.getvalue()).decode('utf-8')
+    except Exception:
+        return b64_string
+
+
 @app.route('/api/detect', methods=['POST'])
 def api_detect():
     """ถ่ายภาพ (ถ้ามีกล้อง) หรือรับภาพอัปโหลด แล้วดึงข้อมูลมาวิเคราะห์ด้วย best.pt หรือโหมดจำลอง
@@ -162,15 +180,14 @@ def api_detect():
     else:
         image_path, image_base64 = capture_image_to_file()
 
-    # มีภาพ → วิเคราะห์ด้วยโมเดล; ส่ง detections (พร้อม box) ให้มือถือวาด label ในเบราว์เซอร์
+    # มีภาพ → วิเคราะห์ด้วยโมเดล (หรือ mock ถ้าโมเดลไม่ทำงาน); ไม่มีภาพ → ใช้ mock เสมอ
     detection = None
     total_price = 0.0
-    detections_with_boxes = []
     if image_path:
         try:
             from food_detector import is_available, detect_best_with_annotated_image
             if is_available():
-                result, annotated_base64, detections_with_boxes = detect_best_with_annotated_image(image_path)
+                result, annotated_base64 = detect_best_with_annotated_image(image_path)
                 if result:
                     total_price = result.get('total_price_sum') or result['price_per_unit']
                     detection = {
@@ -181,12 +198,14 @@ def api_detect():
                     if annotated_base64:
                         image_base64 = annotated_base64
         except Exception:
-            detections_with_boxes = []
+            pass
         if image_path and os.path.exists(image_path):
             try:
                 os.unlink(image_path)
             except Exception:
                 pass
+        if image_base64:
+            image_base64 = _resize_image_base64_for_display(image_base64)
 
     no_image = image_path is None
     if detection is None:
@@ -201,7 +220,6 @@ def api_detect():
         'timestamp': datetime.now().isoformat(),
         'image_base64': image_base64,
         'no_image': no_image,
-        'detections': detections_with_boxes,
     })
 
 
