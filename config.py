@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-การตั้งค่าโมเดลและราคาอาหารสำหรับระบบตรวจจับอาหาร
-"""
+"การตั้งค่าโมเดลและราคาอาหารสำหรับระบบตรวจจับอาหารอัตโนมัติ"
+
 import os
 
-# path โมเดล YOLOv8 (best.pt) - แก้เป็น path จริงที่เก็บไฟล์
-MODEL_PATH = os.environ.get(
-    'FOOD_MODEL_PATH',
-    r'c:\Users\ssoms\Downloads\AI Food Recognition System Project\best.pt'
-)
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model", "best.pt")
 # ชื่อคลาสจาก data.yaml ของโปรเจกต์ (18 คลาส)
 CLASS_NAMES = [
     'boiled_chicken', 'boiled_chicken_blood_jelly', 'boiled_egg',
@@ -64,106 +59,177 @@ PRICE_PER_CLASS = {
 }
 
 # ความมั่นใจขั้นต่ำ (ถ้าต่ำกว่านี้ไม่นับ)
-CONFIDENCE_THRESHOLD = 0.25
+CONFIDENCE_THRESHOLD = 0.20
 
-# --- วัตถุดิบ (จาก Roboflow) → ชื่อเมนู (สำหรับแสดงบนเว็บ) ---
-# ใช้สำหรับแมปผลตรวจจับวัตถุดิบเป็นชื่ออาหาร/เมนู
-INGREDIENT_TO_MENU = {
-    # ข้าวมันไก่ทอด
-    "fried_chicken": "ข้าวมันไก่ทอด",
-    "cucumber": "ข้าวมันไก่ทอด",
-    "boiled_chicken_blood_jelly": "ข้าวมันไก่ทอด",
-    "rice": "ข้าวมันไก่ทอด",
-    # ข้าวมันไก่ต้ม
-    "boiled_chicken": "ข้าวมันไก่ต้ม",
-    # "boiled_chicken_blood_jelly": "ข้าวมันไก่ต้ม",  # ซ้ำกับด้านบน
-    # "cucumber": "ข้าวมันไก่ต้ม",
-    # "rice": "ข้าวมันไก่ต้ม",
-    # ก๋วยเตี๋ยวไก่น่อง
-    "chicken_drumstick": "ก๋วยเตี๋ยวไก่น่อง",
-    "noodle": "ก๋วยเตี๋ยวไก่น่อง",
-    "daikon_radish": "ก๋วยเตี๋ยวไก่น่อง",
-    # ก๋วยเตี๋ยวไก่ฉีก
-    "chicken_shredded": "ก๋วยเตี๋ยวไก่ฉีก",
-    # "noodle": "ก๋วยเตี๋ยวไก่ฉีก",
-    # "daikon_radish": "ก๋วยเตี๋ยวไก่ฉีก",
-    # ข้าวหมูแดง
-    "boiled_egg": "ข้าวหมูแดง",
-    "red_pork": "ข้าวหมูแดง",
-    "chainese_sausage": "ข้าวหมูแดง",  # สะกดตามชื่อในโมเดล
-    # "cucumber": "ข้าวหมูแดง",
-    # "rice": "ข้าวหมูแดง",
-    # ข้าวหมูกรอบ
-    "crispy_pork": "ข้าวหมูกรอบ",
-    # "boiled_egg": "ข้าวหมูกรอบ",
-    # "cucumber": "ข้าวหมูกรอบ",
-    # "chainese_sausage": "ข้าวหมูกรอบ",
-    # "rice": "ข้าวหมูกรอบ",
-    # ข้าวหมูแดงและข้าวหมูกรอบ
-    "red_pork_and_crispy_pork": "ข้าวหมูแดงและข้าวหมูกรอบ",
-    # ข้าวกะเพราหมูสับเต้าหู้ทอด (ในโมเดลเป็น stir_fried_basil)
-    "fried_tofo": "ข้าวกะเพราหมูสับเต้าหู้ทอด",
-    "stir_fried_basil": "ข้าวกะเพราหมูสับเต้าหู้ทอด",
-    "minced_pork": "ข้าวกะเพราหมูสับเต้าหู้ทอด",
-    # "rice": "ข้าวกะเพราหมูสับเต้าหู้ทอด",
-}
-
-# ชุดวัตถุดิบของแต่ละเมนู (ใช้สำหรับจับคู่จากผลตรวจจับ → เลือกเมนู)
-# เรียงจากเมนูที่เฉพาะเจาะจงมาก (วัตถุดิบมาก) ไปน้อย เพื่อให้เลือกเมนูที่ตรงที่สุดก่อน
 MENU_DEFINITIONS = [
-    {"name": "ข้าวหมูแดงและข้าวหมูกรอบ", "ingredients": {"boiled_egg", "red_pork", "crispy_pork", "cucumber", "chainese_sausage", "red_pork_and_crispy_pork", "rice"}, "price": 55},
-    {"name": "ข้าวมันไก่ทอด", "ingredients": {"fried_chicken", "cucumber", "boiled_chicken_blood_jelly", "rice"}, "price": 50},
-    {"name": "ข้าวมันไก่ต้ม", "ingredients": {"boiled_chicken", "boiled_chicken_blood_jelly", "cucumber", "rice"}, "price": 45},
-    {"name": "ก๋วยเตี๋ยวไก่น่อง", "ingredients": {"chicken_drumstick", "noodle", "daikon_radish"}, "price": 50},
-    {"name": "ก๋วยเตี๋ยวไก่ฉีก", "ingredients": {"chicken_shredded", "noodle", "daikon_radish"}, "price": 45},
-    {"name": "ข้าวหมูแดง", "ingredients": {"boiled_egg", "red_pork", "cucumber", "chainese_sausage", "rice"}, "price": 50},
-    {"name": "ข้าวหมูกรอบ", "ingredients": {"boiled_egg", "crispy_pork", "cucumber", "chainese_sausage", "rice"}, "price": 50},
-    {"name": "ข้าวกะเพราหมูสับเต้าหู้ทอด", "ingredients": {"fried_tofo", "rice", "stir_fried_basil", "minced_pork"}, "price": 45},
+    {
+    "name": "ข้าวมันไก่ทอดผสม",
+    "ingredients": {
+        "fried_chicken",
+        "boiled_chicken",
+        "boiled_chicken_blood_jelly",
+        "cucumber",
+        "rice",
+        "chicken_rice"},
+    "key": {"fried_chicken", "boiled_chicken"},
+    "price": 55
+    },  
+    {
+        "name": "ข้าวมันไก่ทอด",
+        "ingredients": {"fried_chicken", "cucumber", "boiled_chicken_blood_jelly", "rice"},
+        "key": {"fried_chicken"},
+        "price": 50
+    },
+    {
+        "name": "ข้าวมันไก่ต้ม",
+        "ingredients": {"boiled_chicken", "boiled_chicken_blood_jelly", "cucumber", "rice", "chicken_rice"},
+        "key": {"boiled_chicken", "chicken_rice"},
+        "price": 45
+    },
+    {
+        "name": "ก๋วยเตี๋ยวไก่น่อง",
+        "ingredients": {"chicken_drumstick", "noodle", "daikon_radish"},
+        "key": {"chicken_drumstick", "noodle"},
+        "price": 50
+    },
+    {
+        "name": "ก๋วยเตี๋ยวไก่ฉีก",
+        "ingredients": {"chicken_shredded", "noodle", "daikon_radish","chicken_shredded"},
+        "key": {"chicken_shredded", "noodle"},
+        "price": 45
+    },
+    {
+        "name": "ข้าวหมูแดง",
+        "ingredients": {"boiled_egg", "red_pork", "cucumber", "chainese_sausage", "rice"},
+        "key": {"red_pork"},
+        "price": 50
+    },
+    {
+        "name": "ข้าวหมูกรอบ",
+        "ingredients": {"boiled_egg", "crispy_pork", "cucumber", "chainese_sausage", "rice"},
+        "key": {"crispy_pork"},
+        "price": 50
+    },
+    {
+        "name": "ข้าวหมูแดงและข้าวหมูกรอบ",
+        "ingredients": {"boiled_egg", "red_pork", "crispy_pork", "cucumber", "chainese_sausage", "rice"},
+        "key": {"red_pork", "crispy_pork"},
+        "price": 55
+    },
+    {
+        "name": "ข้าวกะเพราหมูสับเต้าหู้ทอด",
+        "ingredients": {"fried_tofo", "rice", "stir_fried_basil", "minced_pork"},
+        "key": {"stir_fried_basil"},
+        "price": 45
+    },
+    
 ]
 
 # เมนูที่ไม่มีใน MENU_DEFINITIONS จะใช้ราคาจาก PRICE_PER_CLASS รวม (หรือ fallback)
 
 
-def ingredients_to_menu(detected_ingredient_labels):
-    """
-    แปลงชุดวัตถุดิบที่ตรวจจับได้ (list/set ของชื่อคลาส เช่น rice, fried_chicken)
-    เป็นชื่อเมนูและราคาที่เหมาะสม
-    ใช้หลัก "ความตรงกันมากที่สุด" ถ้าตรวจจับได้ไม่ครบทุกอย่างก็ยังเลือกเมนูที่ใกล้เคียงที่สุด
-    Returns:
-        (menu_name, price) หรือ (None, None) ถ้าไม่มีเมนูที่ตรง
-    """
-    if not detected_ingredient_labels:
+def ingredients_to_menu(detected_items):
+    if not detected_items:
         return None, None
-    detected_set = set(detected_ingredient_labels)
 
-    # วิธีที่ 1: ถ้ามีเมนูที่วัตถุดิบครบเป็น subset ของที่ตรวจจับได้ → ใช้เมนูนั้น (เฉพาะเจาะจงที่สุด)
-    best = None
-    best_len = 0
-    for m in MENU_DEFINITIONS:
-        ing = m["ingredients"]
-        if ing <= detected_set and len(ing) > best_len:
-            best = m
-            best_len = len(ing)
-    if best:
-        return best["name"], best["price"]
+    # 1️⃣ กรอง confidence ต่ำ
+    detected = {
+        item["label"]: item["confidence"]
+        for item in detected_items
+        if item["confidence"] >= CONFIDENCE_THRESHOLD
+    }
 
-    # วิธีที่ 2: เลือกเมนูที่ "ตรงกับวัตถุดิบที่ตรวจจับได้มากที่สุด" (อย่างน้อย 2 อย่าง)
-    best = None
+    if not detected:
+        return None, None
+
+    detected_set = set(detected.keys())
+    print("DETECTED:", detected_set)
+
+    # =====================================================
+    # 🔥 PRIORITY ORDER (สำคัญมาก)
+    # =====================================================
+
+    # ===== 1️⃣ ข้าวกะเพรา (เฉพาะทางสุด) =====
+    if "stir_fried_basil" in detected_set:
+        if "minced_pork" in detected_set and "fried_tofo" in detected_set:
+            return "ข้าวกะเพราหมูสับเต้าหู้ทอด", 45
+        return "ข้าวกะเพรา", 45
+
+    # ===== 2️⃣ ก๋วยเตี๋ยว =====
+    if "noodle" in detected_set:
+        if "chicken_drumstick" in detected_set:
+            return "ก๋วยเตี๋ยวไก่น่อง", 50
+        if "chicken_shredded" in detected_set:
+            return "ก๋วยเตี๋ยวไก่ฉีก", 45
+        return "ก๋วยเตี๋ยว", 40
+
+    # ===== 3️⃣ ข้าวหมูแดง / หมูกรอบ =====
+    if "rice" in detected_set:
+        if "red_pork" in detected_set and "crispy_pork" in detected_set:
+            return "ข้าวหมูแดงและข้าวหมูกรอบ", 55
+        if "red_pork" in detected_set:
+            return "ข้าวหมูแดง", 50
+        if "crispy_pork" in detected_set:
+            return "ข้าวหมูกรอบ", 50
+
+    # ===== 4️⃣ ข้าวมันไก่ =====
+    has_rice = "rice" in detected_set or "chicken_rice" in detected_set
+    has_fried = "fried_chicken" in detected_set
+    has_boiled = "boiled_chicken" in detected_set or "chicken_shredded" in detected_set
+    has_blood = "boiled_chicken_blood_jelly" in detected_set
+    has_cucumber = "cucumber" in detected_set
+
+    if has_rice:
+        if has_fried and has_boiled:
+            return "ข้าวมันไก่ทอดผสม", 55
+        if has_fried:
+            return "ข้าวมันไก่ทอด", 50
+        if has_boiled:
+            return "ข้าวมันไก่ต้ม", 45
+        if has_blood or has_cucumber:
+            return "ข้าวมันไก่", 45
+
+    # =====================================================
+    # 🤖 AI SCORING SYSTEM (fallback อัจฉริยะ)
+    # =====================================================
+
+    best_menu = None
     best_score = 0
-    for m in MENU_DEFINITIONS:
-        ing = m["ingredients"]
-        overlap = len(detected_set & ing)
-        if overlap >= 2 and overlap > best_score:
-            best = m
-            best_score = overlap
-    if best:
-        return best["name"], best["price"]
 
-    # วิธีที่ 3: ตรงแค่ 1 อย่าง ก็ใช้ INGREDIENT_TO_MENU แมปวัตถุดิบหลักเป็นเมนู
-    for label in detected_ingredient_labels:
-        menu_name = INGREDIENT_TO_MENU.get(label)
-        if menu_name:
-            for m in MENU_DEFINITIONS:
-                if m["name"] == menu_name:
-                    return m["name"], m["price"]
+    for menu in MENU_DEFINITIONS:
+
+        menu_ingredients = menu["ingredients"]
+        key_ingredients = menu.get("key", set())
+
+        if key_ingredients and not (key_ingredients & detected_set):
+            continue
+
+        matched = menu_ingredients & detected_set
+        if not matched:
+            continue
+
+        matched_conf_score = sum(detected[i] for i in matched)
+        coverage = len(matched) / len(menu_ingredients)
+
+        extra = detected_set - menu_ingredients
+        penalty = len(extra) * 0.08
+
+        final_score = (matched_conf_score * 0.6) + (coverage * 0.4) - penalty
+
+        if final_score > best_score:
+            best_score = final_score
+            best_menu = menu
+
+    if best_menu and best_score >= 0.35:
+        return best_menu["name"], best_menu["price"]
+
+    # ===== fallback คิดตามวัตถุดิบ =====
+    total_price = sum(
+        PRICE_PER_CLASS.get(label, 0)
+        for label in detected_set
+    )
+
+    if total_price > 0:
+        return "ไม่ทราบเมนู (คิดตามวัตถุดิบ)", total_price
+
     return None, None

@@ -15,13 +15,9 @@ def _get_model_path():
 
 
 def is_available():
-    """ตรวจว่าใช้โมเดลวิเคราะห์ได้หรือไม่ (มีไฟล์และ ultralytics ติดตั้ง)"""
-    try:
-        from ultralytics import YOLO
-    except ImportError:
-        return False
-    path = _get_model_path()
-    return path and os.path.isfile(path)
+    m = load_model()
+    print("MODEL LOADED:", m is not None)
+    return m is not None
 
 
 def load_model():
@@ -36,14 +32,14 @@ def load_model():
             return None
         _model = YOLO(path)
         return _model
-    except Exception:
-        return None
+    except Exception as e:
+        print("Model load error:", e)
+    return None
+
 
 
 def detect(image_path=None, image_array=None, conf_threshold=None):
-    """
-    วิเคราะห์ภาพด้วยโมเดล best.pt
-
+    """ วิเคราะห์ภาพด้วยโมเดล best.pt
     Args:
         image_path: path ไฟล์ภาพ (เช่น .jpg)
         image_array: numpy array ภาพ (RGB หรือ BGR) ถ้าไม่ใช้ image_path
@@ -57,6 +53,7 @@ def detect(image_path=None, image_array=None, conf_threshold=None):
         เรียงจาก confidence สูงไปต่ำ
         ถ้าโหลดโมเดลไม่ได้หรือไม่มี detection คืน []
     """
+    
     from config import CONFIDENCE_THRESHOLD, PRICE_PER_CLASS, CLASS_NAMES_TH
 
     model = load_model()
@@ -120,7 +117,7 @@ def detect_best(image_path=None, image_array=None, conf_threshold=None):
     detected_labels = [it['label'] for it in items]
     total_price_ingredients = sum(it['price_per_unit'] for it in items)
 
-    menu_name, menu_price = ingredients_to_menu(detected_labels)
+    menu_name, menu_price = ingredients_to_menu(items)
     if menu_name is not None and menu_price is not None:
         return {
             'label': menu_name,  # แสดงชื่อเมนูบนเว็บ
