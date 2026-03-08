@@ -6,46 +6,52 @@
  */
 
 const API = {
-  camera: '/api/camera/status',
-  weight: '/api/weight',
-  detect: '/api/detect',
+  camera: "/api/camera/status",
+  weight: "/api/weight",
+  detect: "/api/detect",
 };
 
 const COUNTDOWN_SECONDS = 5;
 
 // Elements
-const cameraStatusText = document.getElementById('camera-status-text');
-const cameraDot = document.getElementById('camera-dot');
-const liveWeightEl = document.getElementById('live-weight');
-const btnDetect = document.getElementById('btn-detect');
-const resultImage = document.getElementById('result-image');
-const resultImagePlaceholder = document.getElementById('result-image-placeholder');
-const resultFoodName = document.getElementById('result-food-name');
-const resultWeight = document.getElementById('result-weight');
-const resultPrice = document.getElementById('result-price');
-const resultNoImageMsg = document.getElementById('result-no-image-msg');
-const btnDetectAgain = document.getElementById('btn-detect-again');
-const btnConfirm = document.getElementById('btn-confirm');
-const countdownNum = document.getElementById('countdown-num');
-const btnDoneNow = document.getElementById('btn-done-now');
-const inputUpload = document.getElementById('input-upload');
-const inputCamera = document.getElementById('input-camera');
-const btnUpload = document.getElementById('btn-upload');
-const btnCamera = document.getElementById('btn-camera');
-const uploadFilename = document.getElementById('upload-filename');
+const cameraStatusText = document.getElementById("camera-status-text");
+const cameraDot = document.getElementById("camera-dot");
+const liveWeightEl = document.getElementById("live-weight");
+const btnDetect = document.getElementById("btn-detect");
+const resultImage = document.getElementById("result-image");
+const resultImagePlaceholder = document.getElementById(
+  "result-image-placeholder",
+);
+const resultFoodName = document.getElementById("result-food-name");
+const resultWeight = document.getElementById("result-weight");
+const resultPrice = document.getElementById("result-price");
+const resultNoImageMsg = document.getElementById("result-no-image-msg");
+const btnDetectAgain = document.getElementById("btn-detect-again");
+const btnConfirm = document.getElementById("btn-confirm");
+const countdownNum = document.getElementById("countdown-num");
+const btnDoneNow = document.getElementById("btn-done-now");
+const inputUpload = document.getElementById("input-upload");
+const inputCamera = document.getElementById("input-camera");
+const btnUpload = document.getElementById("btn-upload");
+const btnCamera = document.getElementById("btn-camera");
+const uploadFilename = document.getElementById("upload-filename");
 
 let weightInterval = null;
 let countdownTimer = null;
 
 function hasUploadedFile() {
-  const fromUpload = inputUpload && inputUpload.files && inputUpload.files.length > 0;
-  const fromCamera = inputCamera && inputCamera.files && inputCamera.files.length > 0;
+  const fromUpload =
+    inputUpload && inputUpload.files && inputUpload.files.length > 0;
+  const fromCamera =
+    inputCamera && inputCamera.files && inputCamera.files.length > 0;
   return fromUpload || fromCamera;
 }
 
 function getSelectedFile() {
-  if (inputUpload && inputUpload.files && inputUpload.files.length > 0) return inputUpload.files[0];
-  if (inputCamera && inputCamera.files && inputCamera.files.length > 0) return inputCamera.files[0];
+  if (inputUpload && inputUpload.files && inputUpload.files.length > 0)
+    return inputUpload.files[0];
+  if (inputCamera && inputCamera.files && inputCamera.files.length > 0)
+    return inputCamera.files[0];
   return null;
 }
 
@@ -55,15 +61,17 @@ function updateDetectButtonState() {
 }
 
 function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document
+    .querySelectorAll(".screen")
+    .forEach((s) => s.classList.remove("active"));
   const el = document.getElementById(screenId);
-  if (el) el.classList.add('active');
+  if (el) el.classList.add("active");
 }
 
 function setCameraStatus(ready, message) {
   cameraStatusText.textContent = message;
-  cameraDot.classList.remove('ready', 'error');
-  cameraDot.classList.add(ready ? 'ready' : 'error');
+  cameraDot.classList.remove("ready", "error");
+  cameraDot.classList.add(ready ? "ready" : "error");
   updateDetectButtonState();
 }
 
@@ -73,7 +81,7 @@ async function checkCamera() {
     const data = await res.json();
     setCameraStatus(data.ready, data.message);
   } catch (e) {
-    setCameraStatus(false, 'ไม่สามารถเชื่อมต่อกล้องได้');
+    setCameraStatus(false, "ไม่สามารถเชื่อมต่อกล้องได้");
   }
 }
 
@@ -81,9 +89,10 @@ async function fetchWeight() {
   try {
     const res = await fetch(API.weight);
     const data = await res.json();
-    if (liveWeightEl) liveWeightEl.textContent = Number(data.weight_gram).toFixed(1);
+    if (liveWeightEl)
+      liveWeightEl.textContent = Number(data.weight_gram).toFixed(1);
   } catch (_) {
-    if (liveWeightEl) liveWeightEl.textContent = '--';
+    if (liveWeightEl) liveWeightEl.textContent = "--";
   }
 }
 
@@ -101,9 +110,14 @@ function stopWeightPolling() {
 
 /** ผลจำลองเมื่อไม่มี detection จาก server (ไม่มีภาพหรือ error) */
 function getFallbackDetection() {
-  const names = ['ข้าวมันไก่', 'ผัดกะเพรา', 'ก๋วยเตี๋ยว', 'ข้าวหมูแดง'];
+  const names = ["ข้าวมันไก่", "ผัดกะเพรา", "ก๋วยเตี๋ยว", "ข้าวหมูแดง"];
   const name = names[Math.floor(Math.random() * names.length)];
-  const prices = { 'ข้าวมันไก่': 50, 'ผัดกะเพรา': 45, 'ก๋วยเตี๋ยว': 40, 'ข้าวหมูแดง': 50 };
+  const prices = {
+    ข้าวมันไก่: 50,
+    ผัดกะเพรา: 45,
+    ก๋วยเตี๋ยว: 40,
+    ข้าวหมูแดง: 50,
+  };
   return { label: name, confidence: 0.9, price_per_unit: prices[name] || 45 };
 }
 
@@ -119,50 +133,51 @@ function showResultPage(data) {
 
   if (resultNoImageMsg) {
     if (noImage || !imageBase64) {
-      resultNoImageMsg.textContent = 'ไม่มีภาพจากกล้องหรืออัปโหลด - แสดงผลจำลอง';
-      resultNoImageMsg.style.display = 'block';
+      resultNoImageMsg.textContent =
+        "ไม่มีภาพจากกล้องหรืออัปโหลด - แสดงผลจำลอง";
+      resultNoImageMsg.style.display = "block";
     } else {
-      resultNoImageMsg.textContent = '';
-      resultNoImageMsg.style.display = 'none';
+      resultNoImageMsg.textContent = "";
+      resultNoImageMsg.style.display = "none";
     }
   }
 
   if (imageBase64) {
-    resultImage.src = 'data:image/jpeg;base64,' + imageBase64;
-    resultImage.classList.add('visible');
-    resultImagePlaceholder.classList.add('hidden');
+    resultImage.src = "data:image/jpeg;base64," + imageBase64;
+    resultImage.classList.add("visible");
+    resultImagePlaceholder.classList.add("hidden");
   } else {
-    resultImage.removeAttribute('src');
-    resultImage.classList.remove('visible');
-    resultImagePlaceholder.classList.remove('hidden');
+    resultImage.removeAttribute("src");
+    resultImage.classList.remove("visible");
+    resultImagePlaceholder.classList.remove("hidden");
   }
 
-  resultFoodName.textContent = detection.label || 'ผลจำลอง';
-  resultWeight.textContent = Number(weight).toFixed(1) + ' กรัม';
-  resultPrice.textContent = Number(price).toFixed(0) + ' บาท';
+  resultFoodName.textContent = detection.label || "ผลจำลอง";
+  resultWeight.textContent = Number(weight).toFixed(1) + " กรัม";
+  resultPrice.textContent = Number(price).toFixed(0) + " บาท";
 
-  showScreen('screen-result');
+  showScreen("screen-result");
 }
 
 function clearUpload() {
-  if (inputUpload) inputUpload.value = '';
-  if (inputCamera) inputCamera.value = '';
+  if (inputUpload) inputUpload.value = "";
+  if (inputCamera) inputCamera.value = "";
   if (uploadFilename) {
-    uploadFilename.textContent = '';
-    uploadFilename.classList.remove('has-file');
+    uploadFilename.textContent = "";
+    uploadFilename.classList.remove("has-file");
   }
   updateDetectButtonState();
 }
 
 function goHome() {
-  showScreen('screen-home');
+  showScreen("screen-home");
   clearUpload();
   updateDetectButtonState();
   startWeightPolling();
 }
 
 function goDone() {
-  showScreen('screen-done');
+  showScreen("screen-done");
   stopWeightPolling();
   let sec = COUNTDOWN_SECONDS;
   countdownNum.textContent = sec;
@@ -190,10 +205,10 @@ async function runDetection() {
     let res;
     if (file) {
       const form = new FormData();
-      form.append('image', file);
-      res = await fetch(API.detect, { method: 'POST', body: form });
+      form.append("image", file);
+      res = await fetch(API.detect, { method: "POST", body: form });
     } else {
-      res = await fetch(API.detect, { method: 'POST' });
+      res = await fetch(API.detect, { method: "POST" });
     }
     let data = {};
     try {
@@ -203,54 +218,66 @@ async function runDetection() {
     }
     if (!res.ok) {
       data.detection = data.detection || getFallbackDetection();
-      data.total_price_bath = data.total_price_bath ?? data.detection.price_per_unit;
+      data.total_price_bath =
+        data.total_price_bath ?? data.detection.price_per_unit;
     }
     stopWeightPolling();
     showResultPage(data);
     clearUpload();
   } catch (e) {
     stopWeightPolling();
-    showResultPage({ detection: getFallbackDetection(), weight_gram: 0, total_price_bath: 45 });
+    showResultPage({
+      detection: getFallbackDetection(),
+      weight_gram: 0,
+      total_price_bath: 45,
+    });
     clearUpload();
   }
 
-  btnDetect.innerHTML = '<span class="btn-icon">📷</span> ถ่ายภาพ หรือ ตรวจจับอาหาร';
+  btnDetect.innerHTML =
+    '<span class="btn-icon">📷</span> ถ่ายภาพ หรือ ตรวจจับอาหาร';
   updateDetectButtonState();
 }
 
 function onImageSelected(file) {
   if (uploadFilename && file) {
     uploadFilename.textContent = "ไฟล์ที่เลือก: " + file.name;
-    uploadFilename.classList.add('has-file');
+    uploadFilename.classList.add("has-file");
     // ไม่ต้อง runDetection ที่นี่
   } else {
     if (uploadFilename) {
-      uploadFilename.textContent = '';
-      uploadFilename.classList.remove('has-file');
+      uploadFilename.textContent = "";
+      uploadFilename.classList.remove("has-file");
     }
   }
   updateDetectButtonState();
 }
 
 if (btnUpload && inputUpload) {
-  btnUpload.addEventListener('click', () => inputUpload.click());
-  inputUpload.addEventListener('change', () => {
-    const file = inputUpload.files && inputUpload.files.length > 0 ? inputUpload.files[0] : null;
-    if (inputCamera) inputCamera.value = '';
+  btnUpload.addEventListener("click", () => inputUpload.click());
+  inputUpload.addEventListener("change", () => {
+    const file =
+      inputUpload.files && inputUpload.files.length > 0
+        ? inputUpload.files[0]
+        : null;
+    if (inputCamera) inputCamera.value = "";
     onImageSelected(file);
   });
 }
 
 if (btnCamera && inputCamera) {
-  btnCamera.addEventListener('click', () => inputCamera.click());
-  inputCamera.addEventListener('change', () => {
-    const file = inputCamera.files && inputCamera.files.length > 0 ? inputCamera.files[0] : null;
-    if (inputUpload) inputUpload.value = '';
+  btnCamera.addEventListener("click", () => inputCamera.click());
+  inputCamera.addEventListener("change", () => {
+    const file =
+      inputCamera.files && inputCamera.files.length > 0
+        ? inputCamera.files[0]
+        : null;
+    if (inputUpload) inputUpload.value = "";
     onImageSelected(file);
   });
 }
 
-btnDetect.addEventListener('click', () => {
+btnDetect.addEventListener("click", () => {
   if (btnDetect.disabled) return;
   if (hasUploadedFile()) {
     runDetection();
@@ -260,20 +287,39 @@ btnDetect.addEventListener('click', () => {
   }
 });
 
-btnDetectAgain.addEventListener('click', () => {
+btnDetectAgain.addEventListener("click", () => {
   goHome();
 });
 
-btnConfirm.addEventListener('click', () => {
+btnConfirm.addEventListener("click", () => {
   goDone();
 });
 
-btnDoneNow.addEventListener('click', () => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer);
-    countdownTimer = null;
+btnConfirm.addEventListener("click", async () => {
+  try {
+    const payload = {
+      label: resultFoodName.textContent,
+      price: parseFloat(resultPrice.textContent),
+      weight: parseFloat(resultWeight.textContent.replace("กรัม", "")),
+      confidence: 0.9,
+      start_time: new Date().toISOString(),
+    };
+
+    const res = await fetch("/api/confirm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    console.log("Confirm response:", data);
+  } catch (err) {
+    console.error("Confirm error:", err);
   }
-  goHome();
+
+  goDone();
 });
 
 // Init

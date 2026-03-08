@@ -9,7 +9,6 @@ from config import CONFIDENCE_THRESHOLD, PRICE_PER_CLASS, label_to_th, MODEL_PAT
 # โมเดลจะโหลดเมื่อมีการเรียกใช้ครั้งแรก (lazy load)
 _model = None
 
-
 def is_available():
     m = load_model()
     print("MODEL LOADED:", m is not None)

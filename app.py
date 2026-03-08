@@ -5,6 +5,7 @@
 """
 import os
 import sys
+import sqlite3
 
 # รองรับการรันบน Windows (พัฒนา) และ Linux (Pi)
 HX711 = None
@@ -219,6 +220,49 @@ def api_detect():
 @app.route('/api/config/prices', methods=['GET'])
 def api_prices():
     return jsonify(MOCK_FOOD_PRICES)
+
+
+# ===== SAVE DETECTION TO DATABASE =====
+def save_detection(start_time, menu_name, confidence, price, weight):
+
+    try:
+        conn = sqlite3.connect("database/food.db", timeout=10)
+        c = conn.cursor()
+
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+
+        c.execute("""
+        INSERT INTO detections
+        (start_time, end_time, duration, detected_menu, confidence, price, weight)
+        VALUES (?,?,?,?,?,?,?)
+        """, (start_time, end_time, duration, menu_name, confidence, price, weight))
+
+        conn.commit()
+
+        print("Data saved to database successfully")
+
+        conn.close()
+
+    except Exception as e:
+        print("DB save error:", e)
+        
+@app.route('/api/confirm', methods=['POST'])
+def api_confirm():
+    
+    print("Confirm API called")
+    
+    data = request.json
+
+    start_time = datetime.fromisoformat(data.get("start_time")).replace(tzinfo=None)
+    menu_name = data["label"]
+    confidence = data["confidence"]
+    price = data["price"]
+    weight = data["weight"]
+
+    save_detection(start_time, menu_name, confidence, price, weight)
+
+    return jsonify({"status": "saved"})
 
 
 if __name__ == '__main__':
