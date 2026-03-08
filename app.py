@@ -178,7 +178,7 @@ def api_detect():
     total_price = 0.0
     if image_path:
         try:
-            from food_detector import is_available, detect_best_with_annotated_image
+            from services.food_detector import is_available, detect_best_with_annotated_image
             if is_available():
                 result, annotated_base64 = detect_best_with_annotated_image(image_path)
                 if result:

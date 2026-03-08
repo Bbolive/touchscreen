@@ -219,17 +219,16 @@ async function runDetection() {
 }
 
 function onImageSelected(file) {
-  if (!uploadFilename) return;
-  if (file) {
+  onImageSelected(file); {
+  if (uploadFilename && file) {
     uploadFilename.textContent = file.name;
-    uploadFilename.classList.add('has-file');
     runDetection();
   } else {
     uploadFilename.textContent = '';
     uploadFilename.classList.remove('has-file');
   }
   updateDetectButtonState();
-}
+}}
 
 if (btnUpload && inputUpload) {
   btnUpload.addEventListener('click', () => inputUpload.click());

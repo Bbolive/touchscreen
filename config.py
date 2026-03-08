@@ -4,7 +4,10 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "best.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "best.pt")
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
+
 # ชื่อคลาสจาก data.yaml ของโปรเจกต์ (18 คลาส)
 CLASS_NAMES = [
     'boiled_chicken', 'boiled_chicken_blood_jelly', 'boiled_egg',
@@ -35,6 +38,8 @@ CLASS_NAMES_TH = {
     'rice': 'ข้าว',
     'stir_fried_basil': 'ผัดกะเพรา',
 }
+def label_to_th(label):
+    return CLASS_NAMES_TH.get(label, label)
 
 # ราคาต่อหน่วย (บาท) ตามคลาส - แก้ได้ตามเมนูจริง
 PRICE_PER_CLASS = {
@@ -59,7 +64,7 @@ PRICE_PER_CLASS = {
 }
 
 # ความมั่นใจขั้นต่ำ (ถ้าต่ำกว่านี้ไม่นับ)
-CONFIDENCE_THRESHOLD = 0.20
+CONFIDENCE_THRESHOLD = 0.35
 
 MENU_DEFINITIONS = [
     {
@@ -94,7 +99,7 @@ MENU_DEFINITIONS = [
     },
     {
         "name": "ก๋วยเตี๋ยวไก่ฉีก",
-        "ingredients": {"chicken_shredded", "noodle", "daikon_radish","chicken_shredded"},
+        "ingredients": {"chicken_shredded", "noodle", "daikon_radish"},
         "key": {"chicken_shredded", "noodle"},
         "price": 45
     },
@@ -153,7 +158,7 @@ def ingredients_to_menu(detected_items):
     if "stir_fried_basil" in detected_set:
         if "minced_pork" in detected_set and "fried_tofo" in detected_set:
             return "ข้าวกะเพราหมูสับเต้าหู้ทอด", 45
-        return "ข้าวกะเพรา", 45
+        return "ข้าวกะเพราหมูสับเต้าหู้ทอด", 45
 
     # ===== 2️⃣ ก๋วยเตี๋ยว =====
     if "noodle" in detected_set:
@@ -161,7 +166,7 @@ def ingredients_to_menu(detected_items):
             return "ก๋วยเตี๋ยวไก่น่อง", 50
         if "chicken_shredded" in detected_set:
             return "ก๋วยเตี๋ยวไก่ฉีก", 45
-        return "ก๋วยเตี๋ยว", 40
+        return "ก๋วยเตี๋ยวไก่ฉีก", 45
 
     # ===== 3️⃣ ข้าวหมูแดง / หมูกรอบ =====
     if "rice" in detected_set:

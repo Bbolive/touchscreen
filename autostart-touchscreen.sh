@@ -23,4 +23,6 @@ fi
   --disable-infobars \
   --no-first-run \
   --disable-session-crashed-bubble \
+  --disable-pinch \
+  --overscroll-history-navigation=0 \
   http://127.0.0.1:5000

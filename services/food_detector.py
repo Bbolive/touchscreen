@@ -4,14 +4,10 @@
 ดึงข้อมูลมาวิเคราะห์จากไฟล์โมเดลของ AI Food Recognition System Project
 """
 import os
+from config import CONFIDENCE_THRESHOLD, PRICE_PER_CLASS, label_to_th, MODEL_PATH
 
 # โมเดลจะโหลดเมื่อมีการเรียกใช้ครั้งแรก (lazy load)
 _model = None
-
-
-def _get_model_path():
-    from config import MODEL_PATH
-    return MODEL_PATH
 
 
 def is_available():
@@ -25,21 +21,30 @@ def load_model():
     global _model
     if _model is not None:
         return _model
+
     try:
         from ultralytics import YOLO
-        path = _get_model_path()
+
+        path = MODEL_PATH
+
         if not path or not os.path.isfile(path):
+            print("Model file not found:", path)
             return None
+
+        print("Loading YOLO model:", path)
         _model = YOLO(path)
+        print("YOLO model loaded")
+
         return _model
+
     except Exception as e:
         print("Model load error:", e)
+
     return None
 
 
-
 def detect(image_path=None, image_array=None, conf_threshold=None):
-    """ วิเคราะห์ภาพด้วยโมเดล best.pt
+    """วิเคราะห์ภาพด้วยโมเดล best.pt
     Args:
         image_path: path ไฟล์ภาพ (เช่น .jpg)
         image_array: numpy array ภาพ (RGB หรือ BGR) ถ้าไม่ใช้ image_path
@@ -53,10 +58,9 @@ def detect(image_path=None, image_array=None, conf_threshold=None):
         เรียงจาก confidence สูงไปต่ำ
         ถ้าโหลดโมเดลไม่ได้หรือไม่มี detection คืน []
     """
-    
-    from config import CONFIDENCE_THRESHOLD, PRICE_PER_CLASS, CLASS_NAMES_TH
 
     model = load_model()
+
     if model is None:
         return []
 
@@ -76,29 +80,43 @@ def detect(image_path=None, image_array=None, conf_threshold=None):
         return []
 
     boxes = results[0].boxes
-    if boxes is None or len(boxes) == 0:
+    if boxes is None or len(boxes.xyxy) == 0:
+        print("No objects detected")
         return []
 
     # ชื่อคลาสจากโมเดล (อาจเรียงต่างจาก config)
     names = results[0].names or {}
     out = []
-    for i in range(len(boxes)):
-        cls_id = int(boxes.cls[i].item())
-        conf_f = float(boxes.conf[i].item())
-        label = names.get(cls_id, 'unknown')
-        if isinstance(label, int):
-            label = names.get(label, 'unknown')
+    for i in range(len(boxes.xyxy)):
+        cls_id = (
+            int(boxes.cls[i].item())
+            if hasattr(boxes.cls[i], "item")
+            else int(boxes.cls[i])
+        )
+        conf_f = (
+            float(boxes.conf[i].item())
+            if hasattr(boxes.conf[i], "item")
+            else float(boxes.conf[i])
+        )
+        if isinstance(names, dict):
+            label = names.get(cls_id, "unknown")
+        elif isinstance(names, list):
+            label = names[cls_id] if cls_id < len(names) else "unknown"
+        else:
+            label = "unknown"
         price = PRICE_PER_CLASS.get(label, 30)
-        label_th = CLASS_NAMES_TH.get(label, label)
-        out.append({
-            'label': label,
-            'label_th': label_th,
-            'confidence': round(conf_f, 2),
-            'price_per_unit': price,
-        })
+        label_th = label_to_th(label)
+        out.append(
+            {
+                "label": label,
+                "label_th": label_th,
+                "confidence": round(conf_f, 2),
+                "price_per_unit": price,
+            }
+        )
 
     # เรียง confidence สูงไปต่ำ
-    out.sort(key=lambda x: -x['confidence'])
+    out.sort(key=lambda x: -x["confidence"])
     return out
 
 
@@ -110,32 +128,34 @@ def detect_best(image_path=None, image_array=None, conf_threshold=None):
     """
     from config import ingredients_to_menu
 
-    items = detect(image_path=image_path, image_array=image_array, conf_threshold=conf_threshold)
+    items = detect(
+        image_path=image_path, image_array=image_array, conf_threshold=conf_threshold
+    )
     if not items:
         return None
     best = items[0]
-    detected_labels = [it['label'] for it in items]
-    total_price_ingredients = sum(it['price_per_unit'] for it in items)
+    detected_labels = [it["label"] for it in items]
+    total_price_ingredients = sum(it["price_per_unit"] for it in items)
 
     menu_name, menu_price = ingredients_to_menu(items)
     if menu_name is not None and menu_price is not None:
         return {
-            'label': menu_name,  # แสดงชื่อเมนูบนเว็บ
-            'label_en': best['label'],
-            'confidence': best['confidence'],
-            'price_per_unit': menu_price,
-            'total_detected': len(items),
-            'total_price_sum': menu_price,
-            'ingredients_detected': detected_labels,  # วัตถุดิบที่ตรวจจับได้ (ใช้แสดงบนภาพได้)
+            "label": menu_name,  # แสดงชื่อเมนูบนเว็บ
+            "label_en": best["label"],
+            "confidence": best["confidence"],
+            "price_per_unit": menu_price,
+            "total_detected": len(items),
+            "total_price_sum": menu_price,
+            "ingredients_detected": detected_labels,  # วัตถุดิบที่ตรวจจับได้ (ใช้แสดงบนภาพได้)
         }
     return {
-        'label': best['label_th'],  # fallback: แสดงชื่อวัตถุดิบ
-        'label_en': best['label'],
-        'confidence': best['confidence'],
-        'price_per_unit': best['price_per_unit'],
-        'total_detected': len(items),
-        'total_price_sum': total_price_ingredients,
-        'ingredients_detected': detected_labels,
+        "label": best["label_th"],  # fallback: แสดงชื่อวัตถุดิบ
+        "label_en": best["label"],
+        "confidence": best["confidence"],
+        "price_per_unit": best["price_per_unit"],
+        "total_detected": len(items),
+        "total_price_sum": total_price_ingredients,
+        "ingredients_detected": detected_labels,
     }
 
 
@@ -148,13 +168,14 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
     """
     import base64
     import io
+
     try:
         from PIL import Image, ImageDraw, ImageFont
     except ImportError:
         return None
 
     try:
-        img = Image.open(image_path).convert('RGB')
+        img = Image.open(image_path).convert("RGB")
     except Exception:
         return None
 
@@ -165,13 +186,13 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
     # ลองโหลดฟอนต์ภาษาไทย (Windows/Linux/macOS)
     font = None
     for path in [
-        'C:/Windows/Fonts/leelawad.ttf',
-        'C:/Windows/Fonts/thsarabunnew.ttf',
-        'C:/Windows/Fonts/THSarabun.ttf',
-        'C:/Windows/Fonts/tahoma.ttf',
-        '/usr/share/fonts/truetype/thai/Garuda.ttf',
-        '/usr/share/fonts/truetype/fonts-thai-tlwg/TlwgMono.ttf',
-        '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
+        "C:/Windows/Fonts/leelawad.ttf",
+        "C:/Windows/Fonts/thsarabunnew.ttf",
+        "C:/Windows/Fonts/THSarabun.ttf",
+        "C:/Windows/Fonts/tahoma.ttf",
+        "/usr/share/fonts/truetype/thai/Garuda.ttf",
+        "/usr/share/fonts/truetype/fonts-thai-tlwg/TlwgMono.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
     ]:
         if os.path.isfile(path):
             try:
@@ -190,27 +211,36 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
     text_color = (255, 255, 255)
     label_h = max(18, min(w, h) // 20)
 
-    for i in range(len(boxes)):
+    for i in range(len(boxes.xyxy)):
         try:
             xy = boxes.xyxy[i]
-            if hasattr(xy, 'cpu'):
+            if hasattr(xy, "cpu"):
                 xy = xy.cpu().numpy()
             x1 = int(round(float(xy[0])))
             y1 = int(round(float(xy[1])))
             x2 = int(round(float(xy[2])))
             y2 = int(round(float(xy[3])))
-            cls_id = int(boxes.cls[i].item()) if hasattr(boxes.cls[i], 'item') else int(boxes.cls[i])
+            cls_id = (
+                int(boxes.cls[i].item())
+                if hasattr(boxes.cls[i], "item")
+                else int(boxes.cls[i])
+            )
             conf = confidences[i] if i < len(confidences) else 0
-            label_en = names.get(cls_id, 'unknown')
-            if isinstance(label_en, int):
-                label_en = names.get(label_en, 'unknown')
+            if isinstance(names, dict):
+                label_en = names.get(cls_id, "unknown")
+            elif isinstance(names, list):
+                label_en = names[cls_id] if cls_id < len(names) else "unknown"
+            else:
+                label_en = "unknown"
             # ใช้ชื่อภาษาไทย (วัตถุดิบ): ข้าว แตงกวา ไก่ทอด ฯลฯ
             label_th = names_th.get(label_en, label_en)
-            text = '{} {:.0%}'.format(label_th, conf)
+            text = "{} {:.0%}".format(label_th, conf)
         except Exception:
             continue
 
-        draw.rectangle([x1, y1, x2, y2], outline=box_color, width=max(2, min(w, h) // 200))
+        draw.rectangle(
+            [x1, y1, x2, y2], outline=box_color, width=max(2, min(w, h) // 200)
+        )
         ty0 = max(0, y1 - label_h)
         draw.rectangle([x1, ty0, x2, y1], fill=text_bg)
         if font:
@@ -219,8 +249,8 @@ def _draw_labels_on_image(image_path, boxes, names, names_th, confidences):
             draw.text((x1, ty0), text, fill=text_color)
 
     buf = io.BytesIO()
-    img.save(buf, format='JPEG', quality=88)
-    return base64.b64encode(buf.getvalue()).decode('utf-8')
+    img.save(buf, format="JPEG", quality=88)
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
 def detect_best_with_annotated_image(image_path, conf_threshold=None):
@@ -245,26 +275,37 @@ def detect_best_with_annotated_image(image_path, conf_threshold=None):
 
     boxes = results[0].boxes
     names = results[0].names or {}
-    if boxes is None or len(boxes) == 0:
+    if boxes is None or len(boxes.xyxy) == 0:
         return None, None
 
     best_result = detect_best(image_path=image_path, conf_threshold=conf)
-    confidences = [float(boxes.conf[i].item()) for i in range(len(boxes))]
-    annotated_b64 = _draw_labels_on_image(image_path, boxes, names, CLASS_NAMES_TH, confidences)
+    confidences = [
+        (
+            float(boxes.conf[i].item())
+            if hasattr(boxes.conf[i], "item")
+            else float(boxes.conf[i])
+        )
+        for i in range(len(boxes.xyxy))
+    ]
+    annotated_b64 = _draw_labels_on_image(
+        image_path, boxes, names, CLASS_NAMES_TH, confidences
+    )
 
     # ถ้าวาดลาเบลภาษาไทยไม่ได้ ใช้ภาพที่ ultralytics วาด (ภาษาอังกฤษ)
     if not annotated_b64:
         try:
             import base64
             import io
+
             plotted = results[0].plot()
             if len(plotted.shape) == 3 and plotted.shape[2] == 3:
                 plotted = plotted[:, :, ::-1]
             from PIL import Image
+
             img = Image.fromarray(plotted)
             buf = io.BytesIO()
-            img.save(buf, format='JPEG', quality=88)
-            annotated_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            img.save(buf, format="JPEG", quality=88)
+            annotated_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
         except Exception:
             pass
 
