@@ -219,16 +219,18 @@ async function runDetection() {
 }
 
 function onImageSelected(file) {
-  onImageSelected(file); {
   if (uploadFilename && file) {
-    uploadFilename.textContent = file.name;
-    runDetection();
+    uploadFilename.textContent = "ไฟล์ที่เลือก: " + file.name;
+    uploadFilename.classList.add('has-file');
+    // ไม่ต้อง runDetection ที่นี่
   } else {
-    uploadFilename.textContent = '';
-    uploadFilename.classList.remove('has-file');
+    if (uploadFilename) {
+      uploadFilename.textContent = '';
+      uploadFilename.classList.remove('has-file');
+    }
   }
   updateDetectButtonState();
-}}
+}
 
 if (btnUpload && inputUpload) {
   btnUpload.addEventListener('click', () => inputUpload.click());

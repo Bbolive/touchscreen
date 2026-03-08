@@ -10,57 +10,73 @@ if not os.path.exists(MODEL_PATH):
 
 # ชื่อคลาสจาก data.yaml ของโปรเจกต์ (18 คลาส)
 CLASS_NAMES = [
-    'boiled_chicken', 'boiled_chicken_blood_jelly', 'boiled_egg',
-    'chainese_sausage', 'chicken_drumstick', 'chicken_rice', 'chicken_shredded',
-    'crispy_pork', 'cucumber', 'daikon_radish', 'fried_chicken', 'fried_tofo',
-    'minced_pork', 'noodle', 'red_pork', 'red_pork_and_crispy_pork',
-    'rice', 'stir_fried_basil'
+    "boiled_chicken",
+    "boiled_chicken_blood_jelly",
+    "boiled_egg",
+    "chainese_sausage",
+    "chicken_drumstick",
+    "chicken_rice",
+    "chicken_shredded",
+    "crispy_pork",
+    "cucumber",
+    "daikon_radish",
+    "fried_chicken",
+    "fried_tofo",
+    "minced_pork",
+    "noodle",
+    "red_pork",
+    "red_pork_and_crispy_pork",
+    "rice",
+    "stir_fried_basil",
 ]
 
 # ชื่อแสดงภาษาไทย (ถ้ามี)
 CLASS_NAMES_TH = {
-    'boiled_chicken': 'ไก่ต้ม',
-    'boiled_chicken_blood_jelly': 'เลือดไก่',
-    'boiled_egg': 'ไข่ต้ม',
-    'chainese_sausage': 'ไส้กรอก',
-    'chicken_drumstick': 'น่องไก่',
-    'chicken_rice': 'ข้าวมันไก่',
-    'chicken_shredded': 'ไก่ฉีก',
-    'crispy_pork': 'หมูกรอบ',
-    'cucumber': 'แตงกวา',
-    'daikon_radish': 'หัวไชเท้า',
-    'fried_chicken': 'ไก่ทอด',
-    'fried_tofo': 'เต้าหู้ทอด',
-    'minced_pork': 'หมูสับ',
-    'noodle': 'ก๋วยเตี๋ยว',
-    'red_pork': 'หมูแดง',
-    'red_pork_and_crispy_pork': 'หมูแดงกับหมูกรอบ',
-    'rice': 'ข้าว',
-    'stir_fried_basil': 'ผัดกะเพรา',
+    "boiled_chicken": "ไก่ต้ม",
+    "boiled_chicken_blood_jelly": "เลือดไก่",
+    "boiled_egg": "ไข่ต้ม",
+    "chainese_sausage": "ไส้กรอก",
+    "chicken_drumstick": "น่องไก่",
+    "chicken_rice": "ข้าวมันไก่",
+    "chicken_shredded": "ไก่ฉีก",
+    "crispy_pork": "หมูกรอบ",
+    "cucumber": "แตงกวา",
+    "daikon_radish": "หัวไชเท้า",
+    "fried_chicken": "ไก่ทอด",
+    "fried_tofo": "เต้าหู้ทอด",
+    "minced_pork": "หมูสับ",
+    "noodle": "ก๋วยเตี๋ยว",
+    "red_pork": "หมูแดง",
+    "red_pork_and_crispy_pork": "หมูแดงกับหมูกรอบ",
+    "rice": "ข้าว",
+    "stir_fried_basil": "ผัดกะเพรา",
 }
+
+
 def label_to_th(label):
     return CLASS_NAMES_TH.get(label, label)
 
+
 # ราคาต่อหน่วย (บาท) ตามคลาส - แก้ได้ตามเมนูจริง
 PRICE_PER_CLASS = {
-    'boiled_chicken': 25,
-    'boiled_chicken_blood_jelly': 20,
-    'boiled_egg': 10,
-    'chainese_sausage': 15,
-    'chicken_drumstick': 30,
-    'chicken_rice': 45,
-    'chicken_shredded': 25,
-    'crispy_pork': 40,
-    'cucumber': 5,
-    'daikon_radish': 5,
-    'fried_chicken': 35,
-    'fried_tofo': 15,
-    'minced_pork': 25,
-    'noodle': 40,
-    'red_pork': 45,
-    'red_pork_and_crispy_pork': 50,
-    'rice': 10,
-    'stir_fried_basil': 45,
+    "boiled_chicken": 25,
+    "boiled_chicken_blood_jelly": 20,
+    "boiled_egg": 10,
+    "chainese_sausage": 15,
+    "chicken_drumstick": 30,
+    "chicken_rice": 45,
+    "chicken_shredded": 25,
+    "crispy_pork": 40,
+    "cucumber": 5,
+    "daikon_radish": 5,
+    "fried_chicken": 35,
+    "fried_tofo": 15,
+    "minced_pork": 25,
+    "noodle": 40,
+    "red_pork": 45,
+    "red_pork_and_crispy_pork": 50,
+    "rice": 10,
+    "stir_fried_basil": 45,
 }
 
 # ความมั่นใจขั้นต่ำ (ถ้าต่ำกว่านี้ไม่นับ)
@@ -68,66 +84,96 @@ CONFIDENCE_THRESHOLD = 0.35
 
 MENU_DEFINITIONS = [
     {
-    "name": "ข้าวมันไก่ทอดผสม",
-    "ingredients": {
-        "fried_chicken",
-        "boiled_chicken",
-        "boiled_chicken_blood_jelly",
-        "cucumber",
-        "rice",
-        "chicken_rice"},
-    "key": {"fried_chicken", "boiled_chicken"},
-    "price": 55
-    },  
-    {
         "name": "ข้าวมันไก่ทอด",
-        "ingredients": {"fried_chicken", "cucumber", "boiled_chicken_blood_jelly", "rice"},
+        "ingredients": {
+            "fried_chicken",
+            "cucumber",
+            "boiled_chicken_blood_jelly",
+            "rice",
+        },
         "key": {"fried_chicken"},
-        "price": 50
+        "price": 50,
     },
     {
         "name": "ข้าวมันไก่ต้ม",
-        "ingredients": {"boiled_chicken", "boiled_chicken_blood_jelly", "cucumber", "rice", "chicken_rice"},
+        "ingredients": {
+            "boiled_chicken",
+            "boiled_chicken_blood_jelly",
+            "cucumber",
+            "rice",
+            "chicken_rice",
+        },
         "key": {"boiled_chicken", "chicken_rice"},
-        "price": 45
+        "price": 45,
+    },
+    {
+        "name": "ข้าวมันไก่ทอดไก่ต้ม",
+        "ingredients": {
+            "fried_chicken",
+            "boiled_chicken",
+            "boiled_chicken_blood_jelly",
+            "cucumber",
+            "rice",
+            "chicken_rice",
+        },
+        "key": {"fried_chicken", "boiled_chicken"},
+        "price": 55,
     },
     {
         "name": "ก๋วยเตี๋ยวไก่น่อง",
         "ingredients": {"chicken_drumstick", "noodle", "daikon_radish"},
         "key": {"chicken_drumstick", "noodle"},
-        "price": 50
+        "price": 50,
     },
     {
         "name": "ก๋วยเตี๋ยวไก่ฉีก",
         "ingredients": {"chicken_shredded", "noodle", "daikon_radish"},
         "key": {"chicken_shredded", "noodle"},
-        "price": 45
+        "price": 45,
     },
     {
         "name": "ข้าวหมูแดง",
-        "ingredients": {"boiled_egg", "red_pork", "cucumber", "chainese_sausage", "rice"},
+        "ingredients": {
+            "boiled_egg",
+            "red_pork",
+            "cucumber",
+            "chainese_sausage",
+            "rice",
+        },
         "key": {"red_pork"},
-        "price": 50
+        "price": 50,
     },
     {
         "name": "ข้าวหมูกรอบ",
-        "ingredients": {"boiled_egg", "crispy_pork", "cucumber", "chainese_sausage", "rice"},
+        "ingredients": {
+            "boiled_egg",
+            "crispy_pork",
+            "cucumber",
+            "chainese_sausage",
+            "rice",
+        },
         "key": {"crispy_pork"},
-        "price": 50
+        "price": 50,
     },
     {
         "name": "ข้าวหมูแดงและข้าวหมูกรอบ",
-        "ingredients": {"boiled_egg", "red_pork", "crispy_pork", "cucumber", "chainese_sausage", "rice"},
+        "ingredients": {
+            "boiled_egg",
+            "red_pork",
+            "crispy_pork",
+            "cucumber",
+            "chainese_sausage",
+            "rice",
+        },
         "key": {"red_pork", "crispy_pork"},
-        "price": 55
+        "price": 55,
     },
     {
         "name": "ข้าวกะเพราหมูสับเต้าหู้ทอด",
         "ingredients": {"fried_tofo", "rice", "stir_fried_basil", "minced_pork"},
         "key": {"stir_fried_basil"},
-        "price": 45
+        "price": 45,
     },
-    
 ]
 
 # เมนูที่ไม่มีใน MENU_DEFINITIONS จะใช้ราคาจาก PRICE_PER_CLASS รวม (หรือ fallback)
@@ -161,7 +207,10 @@ def ingredients_to_menu(detected_items):
         return "ข้าวกะเพราหมูสับเต้าหู้ทอด", 45
 
     # ===== 2️⃣ ก๋วยเตี๋ยว =====
-    if "noodle" in detected_set:
+
+
+# ===== 2️⃣ ก๋วยเตี๋ยว =====
+    if "noodle" in detected_set and "rice" not in detected_set:
         if "chicken_drumstick" in detected_set:
             return "ก๋วยเตี๋ยวไก่น่อง", 50
         if "chicken_shredded" in detected_set:
@@ -229,10 +278,7 @@ def ingredients_to_menu(detected_items):
         return best_menu["name"], best_menu["price"]
 
     # ===== fallback คิดตามวัตถุดิบ =====
-    total_price = sum(
-        PRICE_PER_CLASS.get(label, 0)
-        for label in detected_set
-    )
+    total_price = sum(PRICE_PER_CLASS.get(label, 0) for label in detected_set)
 
     if total_price > 0:
         return "ไม่ทราบเมนู (คิดตามวัตถุดิบ)", total_price

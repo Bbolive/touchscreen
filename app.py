@@ -224,3 +224,5 @@ def api_prices():
 if __name__ == '__main__':
     # สำหรับจอ 7 นิ้ว ใช้ 0.0.0.0 เพื่อให้เข้าได้จากอุปกรณ์อื่น
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    
+

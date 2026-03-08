@@ -68,7 +68,9 @@ def detect(image_path=None, image_array=None, conf_threshold=None):
 
     try:
         if image_path and os.path.isfile(image_path):
-            results = model.predict(source=image_path, conf=conf, verbose=False)
+            results = model.predict(
+                source=image_path, conf=0.45, iou=0.4, imgsz=640, verbose=False
+            )
         elif image_array is not None:
             results = model.predict(source=image_array, conf=conf, verbose=False)
         else:
