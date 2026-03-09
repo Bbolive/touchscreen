@@ -35,7 +35,7 @@ CLASS_NAMES_TH = {
     "boiled_chicken": "ไก่ต้ม",
     "boiled_chicken_blood_jelly": "เลือดไก่",
     "boiled_egg": "ไข่ต้ม",
-    "chainese_sausage": "ไส้กรอก",
+    "chainese_sausage": "กุนเชียง",
     "chicken_drumstick": "น่องไก่",
     "chicken_rice": "ข้าวมันไก่",
     "chicken_shredded": "ไก่ฉีก",
