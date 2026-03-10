@@ -206,9 +206,6 @@ def ingredients_to_menu(detected_items):
             return "ข้าวกะเพราหมูสับเต้าหู้ทอด", 45
         return "ข้าวกะเพราหมูสับเต้าหู้ทอด", 45
 
-    # ===== 2️⃣ ก๋วยเตี๋ยว =====
-
-
 # ===== 2️⃣ ก๋วยเตี๋ยว =====
     if "noodle" in detected_set and "rice" not in detected_set:
         if "chicken_drumstick" in detected_set:
